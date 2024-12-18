@@ -4,11 +4,12 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true
   },
-  experimental: {
-    // Disable static generation
-    staticWorkerRequestDeduping: false,
-    staticWorkerThreads: false,
-  }
+  // Disable all UI-related features
+  images: false,
+  reactStrictMode: false,
+  optimizeFonts: false,
+  compress: true,
+  poweredByHeader: false
 }
 
 module.exports = nextConfig 
