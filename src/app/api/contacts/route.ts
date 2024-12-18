@@ -8,7 +8,10 @@ const EmailSchema = z.string().email().max(100);
 
 const PhoneSchema = z.object({
   type: z.enum(['work', 'mobile', 'home']),
-  number: z.string().regex(/^\+\d-\d{3}-\d{3}-\d{4}$/),
+  number: z.string()
+    .min(8)
+    .max(20)
+    .regex(/^\+?[1-9]\d{1,19}$/, "Must be a valid international phone number (E.164 format)"),
   primary: z.boolean()
 });
 

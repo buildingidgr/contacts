@@ -317,11 +317,17 @@ All endpoints may return the following error responses:
 ```
 
 ## Phone Number Format
-Phone numbers must follow the format: `+X-XXX-XXX-XXXX`
-- `+` followed by a single digit country code
-- Three groups of digits (3-3-4)
-- Separated by hyphens
-Example: `+1-555-123-4567`
+Phone numbers should follow the E.164 international format:
+- Optional '+' prefix
+- Country code
+- National number
+- No spaces or special characters
+- Minimum 8 digits, maximum 20 digits
+
+Examples:
+- +306973359331
+- +14155552671
+- 306973359331
 
 ## Validation Rules
 1. Names: Letters only (no spaces or special characters), 2-50 characters
