@@ -27,13 +27,14 @@ const CompanySchema = z.object({
   type: z.string().min(2).max(50).optional()
 }).optional();
 
-const UpdateContactSchema = z.object({
-  firstName: z.string().min(2).max(50).regex(/^[A-Za-z]+$/),
-  lastName: z.string().min(2).max(50).regex(/^[A-Za-z]+$/),
-  email: EmailSchema,
-  phones: z.array(PhoneSchema).min(1),
-  address: AddressSchema,
-  company: CompanySchema,
+// Validation schemas for PATCH - all fields are optional
+const PatchContactSchema = z.object({
+  firstName: z.string().min(2).max(50).regex(/^[A-Za-z]+$/).optional(),
+  lastName: z.string().min(2).max(50).regex(/^[A-Za-z]+$/).optional(),
+  email: EmailSchema.optional(),
+  phones: z.array(PhoneSchema).min(1).optional(),
+  address: AddressSchema.optional(),
+  company: CompanySchema.optional(),
   projectIds: z.array(z.string()).optional(),
   opportunityIds: z.array(z.string()).optional(),
   tags: z.array(z.string().min(2).max(20)).max(10).optional()
@@ -144,7 +145,7 @@ export async function DELETE(
   }
 }
 
-export async function PUT(
+export async function PATCH(
   request: Request,
   { params }: { params: { id: string } }
 ) {
@@ -163,20 +164,19 @@ export async function PUT(
     const body = await request.json();
     
     // Validate request body
-    const validatedData = UpdateContactSchema.parse(body);
+    const validatedData = PatchContactSchema.parse(body);
 
-    // Ensure only one phone is primary
-    const primaryPhones = validatedData.phones.filter(phone => phone.primary);
-    if (primaryPhones.length !== 1) {
+    // If no fields to update were provided
+    if (Object.keys(validatedData).length === 0) {
       return NextResponse.json(
-        { error: 'Exactly one phone number must be marked as primary' },
+        { error: 'No fields to update provided' },
         { status: 400 }
       );
     }
 
-    // First check if the contact exists and belongs to this user
+    // First check if the contact exists and get current data
     const existingContact = await pool.query(
-      'SELECT created_by FROM contacts WHERE id = $1',
+      'SELECT * FROM contacts WHERE id = $1',
       [id]
     );
 
@@ -195,57 +195,120 @@ export async function PUT(
       );
     }
 
-    // Check if the new email conflicts with any other contact for this user
-    const emailConflict = await pool.query(
-      `SELECT id FROM contacts 
-       WHERE created_by = $1 
-       AND email_primary = $2 
-       AND id != $3`,
-      [userId, validatedData.email, id]
-    );
+    const currentContact = existingContact.rows[0];
 
-    if (emailConflict.rows.length > 0) {
-      return NextResponse.json(
-        { 
-          error: 'Email conflict', 
-          details: 'This email address is already used by another contact',
-          conflictingContactId: emailConflict.rows[0].id
-        },
-        { status: 409 }
-      );
+    // If updating phones, validate that exactly one is primary
+    if (validatedData.phones) {
+      const primaryPhones = validatedData.phones.filter(phone => phone.primary);
+      if (primaryPhones.length !== 1) {
+        return NextResponse.json(
+          { error: 'Exactly one phone number must be marked as primary' },
+          { status: 400 }
+        );
+      }
     }
 
-    // Update the contact
+    // If updating email, check for conflicts
+    if (validatedData.email) {
+      const emailConflict = await pool.query(
+        `SELECT id FROM contacts 
+         WHERE created_by = $1 
+         AND email_primary = $2 
+         AND id != $3`,
+        [userId, validatedData.email, id]
+      );
+
+      if (emailConflict.rows.length > 0) {
+        return NextResponse.json(
+          { 
+            error: 'Email conflict', 
+            details: 'This email address is already used by another contact',
+            conflictingContactId: emailConflict.rows[0].id
+          },
+          { status: 409 }
+        );
+      }
+    }
+
+    // Build the update query dynamically based on provided fields
+    const updates = [];
+    const values = [];
+    let paramCount = 1;
+
+    if (validatedData.firstName) {
+      updates.push(`first_name = $${paramCount}`);
+      values.push(validatedData.firstName);
+      paramCount++;
+    }
+
+    if (validatedData.lastName) {
+      updates.push(`last_name = $${paramCount}`);
+      values.push(validatedData.lastName);
+      paramCount++;
+    }
+
+    if (validatedData.email) {
+      updates.push(`email_primary = $${paramCount}`);
+      values.push(validatedData.email);
+      paramCount++;
+    }
+
+    if (validatedData.phones) {
+      updates.push(`phones = $${paramCount}`);
+      values.push(JSON.stringify(validatedData.phones));
+      paramCount++;
+    }
+
+    if ('address' in validatedData) {
+      updates.push(`address = $${paramCount}`);
+      values.push(validatedData.address ? JSON.stringify(validatedData.address) : null);
+      paramCount++;
+    }
+
+    if ('company' in validatedData) {
+      updates.push(`company = $${paramCount}`);
+      values.push(validatedData.company ? JSON.stringify(validatedData.company) : null);
+      paramCount++;
+    }
+
+    if ('projectIds' in validatedData) {
+      updates.push(`project_ids = $${paramCount}`);
+      values.push(validatedData.projectIds || null);
+      paramCount++;
+    }
+
+    if ('opportunityIds' in validatedData) {
+      updates.push(`opportunity_ids = $${paramCount}`);
+      values.push(validatedData.opportunityIds || null);
+      paramCount++;
+    }
+
+    if ('tags' in validatedData) {
+      updates.push(`tags = $${paramCount}`);
+      values.push(validatedData.tags || null);
+      paramCount++;
+    }
+
+    // Add the standard update fields
     const now = new Date().toISOString();
+    updates.push(`updated_at = $${paramCount}`);
+    values.push(now);
+    paramCount++;
+
+    updates.push(`updated_by = $${paramCount}`);
+    values.push(userId);
+    paramCount++;
+
+    // Add the WHERE clause parameter
+    values.push(id);
+
+    // Perform the update
     const result = await pool.query(
       `UPDATE contacts SET 
-        first_name = $1,
-        last_name = $2,
-        email_primary = $3,
-        phones = $4,
-        address = $5,
-        company = $6,
-        project_ids = $7,
-        opportunity_ids = $8,
-        tags = $9,
-        updated_at = $10,
-        updated_by = $11
-       WHERE id = $12
+        ${updates.join(', ')}
+       WHERE id = $${paramCount}
        RETURNING *`,
-      [
-        validatedData.firstName,
-        validatedData.lastName,
-        validatedData.email,
-        JSON.stringify(validatedData.phones),
-        validatedData.address ? JSON.stringify(validatedData.address) : null,
-        validatedData.company ? JSON.stringify(validatedData.company) : null,
-        validatedData.projectIds || null,
-        validatedData.opportunityIds || null,
-        validatedData.tags || null,
-        now,
-        userId,
-        id
-      ]
+      values
     );
 
     // Add metadata to response
