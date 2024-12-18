@@ -10,6 +10,11 @@ interface TokenValidationResponse {
   };
 }
 
+interface AuthServiceResponse {
+  isValid: boolean;
+  error?: string;
+}
+
 export async function validateToken(token: string): Promise<TokenValidationResponse> {
   if (!process.env.AUTH_SERVICE_URL) {
     console.error('AUTH_SERVICE_URL environment variable is not configured');
@@ -49,22 +54,31 @@ export async function validateToken(token: string): Promise<TokenValidationRespo
     // Handle different response status codes as per documentation
     switch (response.status) {
       case 200: {
-        const data = await response.json();
+        const data = await response.json() as AuthServiceResponse;
         console.log('Successful validation response:', data);
         
-        // Validate response structure
-        if (typeof data.valid !== 'boolean' || (data.valid && (!data.details?.userId || !data.details?.expiresAt))) {
-          console.error('Invalid response structure:', data);
+        // Extract user ID from the token
+        try {
+          const tokenPayload = JSON.parse(atob(token.split('.')[1]));
+          console.log('Token payload:', tokenPayload);
+          
+          return {
+            valid: data.isValid,
+            details: {
+              userId: tokenPayload.sub,
+              expiresAt: new Date(tokenPayload.exp * 1000).toISOString()
+            }
+          };
+        } catch (error) {
+          console.error('Error parsing token payload:', error);
           return {
             valid: false,
             error: {
-              message: 'Invalid response format',
-              details: 'Auth service response does not match expected format',
+              message: 'Token parsing error',
+              details: 'Could not extract user information from token',
             },
           };
         }
-        
-        return data;
       }
 
       case 400: {
