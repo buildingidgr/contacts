@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "init-db": "node scripts/init-db.js"
   },
   "dependencies": {
     "@types/pg": "8.10.9",
