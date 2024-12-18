@@ -6,6 +6,7 @@ export async function GET() {
     version: '1.0.0',
     endpoints: {
       'GET /api/contacts/:id': 'Get contact by ID',
+      'POST /api/contacts': 'Create a new contact',
       'GET /api/health': 'Health check endpoint'
     }
   });
