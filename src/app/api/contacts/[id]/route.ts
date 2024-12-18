@@ -295,10 +295,6 @@ export async function PATCH(
     values.push(now);
     paramCount++;
 
-    updates.push(`updated_by = $${paramCount}`);
-    values.push(userId);
-    paramCount++;
-
     // Add the WHERE clause parameter
     values.push(id);
 
@@ -315,7 +311,6 @@ export async function PATCH(
     const contact = {
       ...result.rows[0],
       _metadata: {
-        updatedBy: userId,
         updatedAt: now
       }
     };

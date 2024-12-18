@@ -27,7 +27,6 @@ async function initializeDatabase() {
         created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
         created_by VARCHAR(100) NOT NULL,
-        updated_by VARCHAR(100),
         UNIQUE (email_primary, created_by)
       );
     `);
