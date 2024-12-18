@@ -40,6 +40,41 @@ const PatchContactSchema = z.object({
   tags: z.array(z.string().min(2).max(20)).max(10).optional()
 });
 
+// Helper function to convert snake_case DB record to camelCase API response
+function formatContactResponse(dbContact: any) {
+  const {
+    first_name,
+    last_name,
+    email_primary,
+    phones,
+    address,
+    company,
+    project_ids,
+    opportunity_ids,
+    tags,
+    created_at,
+    updated_at,
+    created_by,
+    ...rest
+  } = dbContact;
+
+  return {
+    id: rest.id,
+    firstName: first_name,
+    lastName: last_name,
+    email: email_primary,
+    phones: typeof phones === 'string' ? JSON.parse(phones) : phones,
+    address: address ? (typeof address === 'string' ? JSON.parse(address) : address) : null,
+    company: company ? (typeof company === 'string' ? JSON.parse(company) : company) : null,
+    projectIds: project_ids || [],
+    opportunityIds: opportunity_ids || [],
+    tags: tags || [],
+    createdAt: created_at,
+    updatedAt: updated_at,
+    createdBy: created_by
+  };
+}
+
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
@@ -69,14 +104,8 @@ export async function GET(
       );
     }
 
-    // Add user information to the response
-    const contact = {
-      ...result.rows[0],
-      _metadata: {
-        requestedBy: userId,
-        requestTime: new Date().toISOString()
-      }
-    };
+    // Format response
+    const contact = formatContactResponse(result.rows[0]);
 
     return NextResponse.json(contact);
   } catch (error) {
@@ -195,8 +224,6 @@ export async function PATCH(
       );
     }
 
-    const currentContact = existingContact.rows[0];
-
     // If updating phones, validate that exactly one is primary
     if (validatedData.phones) {
       const primaryPhones = validatedData.phones.filter(phone => phone.primary);
@@ -307,13 +334,8 @@ export async function PATCH(
       values
     );
 
-    // Add metadata to response
-    const contact = {
-      ...result.rows[0],
-      _metadata: {
-        updatedAt: now
-      }
-    };
+    // Format response
+    const contact = formatContactResponse(result.rows[0]);
 
     return NextResponse.json(contact);
   } catch (error) {
