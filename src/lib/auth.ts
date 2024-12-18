@@ -26,15 +26,17 @@ export async function validateToken(token: string): Promise<TokenValidationRespo
   console.log('Validating token at:', url);
 
   try {
+    // Log the request payload for debugging
+    const payload = { token };
+    console.log('Sending validation request with payload:', payload);
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
-      body: JSON.stringify({
-        accessToken: token // Exactly as specified in the documentation
-      }),
+      body: JSON.stringify(payload),
     });
 
     // Log response details for debugging
