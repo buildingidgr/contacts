@@ -13,16 +13,23 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Log request details for debugging
+  // Log detailed request information
   console.log('Processing request:', {
     path: request.nextUrl.pathname,
     method: request.method,
+    headers: Object.fromEntries(request.headers.entries()),
   });
 
   // Get the token from the Authorization header
   const authHeader = request.headers.get('authorization');
+  console.log('Authorization header:', authHeader);
+
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    console.warn('Missing or invalid authorization header for:', request.nextUrl.pathname);
+    console.warn('Missing or invalid authorization header:', {
+      headerExists: !!authHeader,
+      headerValue: authHeader,
+      path: request.nextUrl.pathname
+    });
     return NextResponse.json(
       {
         error: 'Invalid request',
