@@ -68,6 +68,26 @@ export async function POST(request: Request) {
       );
     }
 
+    // Check if this user already has this exact contact
+    const existingContact = await pool.query(
+      `SELECT id FROM contacts 
+       WHERE created_by = $1 
+       AND first_name = $2 
+       AND last_name = $3 
+       AND email_primary = $4`,
+      [userId, validatedData.firstName, validatedData.lastName, validatedData.email.primary]
+    );
+
+    if (existingContact.rows.length > 0) {
+      return NextResponse.json(
+        { 
+          error: 'Duplicate contact', 
+          details: 'You already have a contact with the same name and email' 
+        },
+        { status: 409 }
+      );
+    }
+
     // Generate a unique ID
     const id = 'c' + Date.now().toString();
 
@@ -121,6 +141,42 @@ export async function POST(request: Request) {
       );
     }
 
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(request: Request) {
+  try {
+    const headersList = headers();
+    const userId = headersList.get('x-user-id');
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // Get only contacts created by this user
+    const result = await pool.query(
+      `SELECT * FROM contacts WHERE created_by = $1 ORDER BY created_at DESC`,
+      [userId]
+    );
+
+    const contacts = result.rows.map(contact => ({
+      ...contact,
+      _metadata: {
+        createdBy: contact.created_by,
+        createdAt: contact.created_at
+      }
+    }));
+
+    return NextResponse.json(contacts);
+  } catch (error) {
+    console.error('Error fetching contacts:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
