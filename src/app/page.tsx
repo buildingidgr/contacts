@@ -7,6 +7,7 @@ const Page: NextPage = () => {
       <p>Available endpoints:</p>
       <ul>
         <li>/api/contacts/[id] - Get contact by ID</li>
+        <li>/api/contacts/[id] - Update contact by ID</li>
         <li>/api/contacts/[id] - Delete contact by ID</li>
         <li>/api/health - Health check endpoint</li>
       </ul>
