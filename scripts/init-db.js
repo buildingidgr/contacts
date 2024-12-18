@@ -62,15 +62,27 @@ async function initializeDatabase() {
     // Wait for database to be ready
     await waitForDatabase(pool);
 
-    // Check table structure
-    const hasValidStructure = await checkTableStructure(pool);
-    if (hasValidStructure) {
-      console.log('Contacts table exists with correct structure');
-      await pool.end();
-      return;
-    }
+    // Check if table exists
+    const tableExists = await pool.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_name = 'contacts'
+      );
+    `);
 
-    console.log('Table needs to be recreated');
+    if (tableExists.rows[0].exists) {
+      console.log('Contacts table already exists, checking structure...');
+      // Check table structure
+      const hasValidStructure = await checkTableStructure(pool);
+      if (hasValidStructure) {
+        console.log('Contacts table exists with correct structure');
+        await pool.end();
+        return;
+      }
+      console.log('Table structure needs to be updated');
+    } else {
+      console.log('Creating contacts table...');
+    }
 
     // Read and log the schema
     const schemaPath = path.join(__dirname, '../schema.sql');
@@ -81,13 +93,13 @@ async function initializeDatabase() {
     await pool.query(schema);
     console.log('Schema executed successfully');
     
-    // Verify the new structure
+    // Verify the structure
     const isValid = await checkTableStructure(pool);
     if (!isValid) {
-      throw new Error('Table structure is still invalid after recreation');
+      throw new Error('Table structure is invalid after creation/update');
     }
     
-    console.log('Database schema created successfully');
+    console.log('Database schema verified successfully');
     await pool.end();
   } catch (error) {
     console.error('Error initializing database:', error);

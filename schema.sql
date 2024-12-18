@@ -1,8 +1,5 @@
--- Drop existing table if it exists
-DROP TABLE IF EXISTS contacts;
-
--- Create contacts table
-CREATE TABLE contacts (
+-- Create contacts table if it doesn't exist
+CREATE TABLE IF NOT EXISTS contacts (
     id VARCHAR(50) PRIMARY KEY,
     first_name VARCHAR(50) NOT NULL CHECK (first_name ~ '^[A-Za-z]{2,50}$'),
     last_name VARCHAR(50) NOT NULL CHECK (last_name ~ '^[A-Za-z]{2,50}$'),

@@ -11,26 +11,24 @@ const pool = new Pool({
 async function initializeDatabase() {
   const client = await pool.connect();
   try {
-    // Drop existing contacts table if it exists
-    await client.query('DROP TABLE IF EXISTS contacts');
-
-    // Create contacts table with all required columns
+    // Create contacts table if it doesn't exist
     await client.query(`
-      CREATE TABLE contacts (
+      CREATE TABLE IF NOT EXISTS contacts (
         id VARCHAR(50) PRIMARY KEY,
-        first_name VARCHAR(50) NOT NULL,
-        last_name VARCHAR(50) NOT NULL,
-        email_primary VARCHAR(100) NOT NULL,
-        email_secondary VARCHAR(100),
+        first_name VARCHAR(50) NOT NULL CHECK (first_name ~ '^[A-Za-z]{2,50}$'),
+        last_name VARCHAR(50) NOT NULL CHECK (last_name ~ '^[A-Za-z]{2,50}$'),
+        email_primary VARCHAR(100) NOT NULL CHECK (email_primary ~ '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
+        email_secondary VARCHAR(100) CHECK (email_secondary ~ '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
         phones JSONB NOT NULL,
         address JSONB,
         company JSONB,
         project_ids TEXT[],
         opportunity_ids TEXT[],
-        tags TEXT[],
-        created_at TIMESTAMP WITH TIME ZONE NOT NULL,
-        updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
-        created_by VARCHAR(50) NOT NULL
+        tags VARCHAR(20)[] CHECK (array_length(tags, 1) <= 10),
+        created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        created_by VARCHAR(100) NOT NULL,
+        updated_by VARCHAR(100)
       );
     `);
 
