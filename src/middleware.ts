@@ -13,16 +13,27 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Log request details for debugging
+  console.log('Processing request:', {
+    path: request.nextUrl.pathname,
+    method: request.method,
+  });
+
   // Get the token from the Authorization header
   const authHeader = request.headers.get('authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    console.warn('Missing or invalid authorization header');
+    console.warn('Missing or invalid authorization header for:', request.nextUrl.pathname);
     return NextResponse.json(
       {
-        error: 'Unauthorized',
-        details: 'Missing or invalid authorization header',
+        error: 'Invalid request',
+        details: 'Access token is required.',
       },
-      { status: 401 }
+      { 
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      }
     );
   }
 
@@ -33,24 +44,42 @@ export async function middleware(request: NextRequest) {
     const validation = await validateToken(token);
 
     if (!validation.valid) {
-      console.warn('Token validation failed:', validation.error);
+      // Map auth service errors to appropriate HTTP status codes
+      let status = 401; // Default to unauthorized
+      if (validation.error?.message === 'Invalid request') {
+        status = 400;
+      } else if (validation.error?.message === 'Internal server error') {
+        status = 500;
+      }
+
+      console.warn('Token validation failed for:', request.nextUrl.pathname, validation.error);
       return NextResponse.json(
         {
           error: validation.error?.message || 'Unauthorized',
           details: validation.error?.details || 'Invalid token',
         },
-        { status: 401 }
+        { 
+          status,
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        }
       );
     }
 
     if (!validation.details?.userId) {
-      console.warn('Token validation succeeded but no user ID was provided');
+      console.warn('Token validation succeeded but no user ID was provided for:', request.nextUrl.pathname);
       return NextResponse.json(
         {
-          error: 'Invalid token',
+          error: 'Invalid response format',
           details: 'Token validation response is missing user information',
         },
-        { status: 401 }
+        { 
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        }
       );
     }
 
@@ -59,7 +88,7 @@ export async function middleware(request: NextRequest) {
     requestHeaders.set('x-user-id', validation.details.userId);
     requestHeaders.set('x-token-expires', validation.details.expiresAt || '');
 
-    console.log('Token validated successfully for user:', validation.details.userId);
+    console.log('Token validated successfully for user:', validation.details.userId, 'path:', request.nextUrl.pathname);
 
     // Return the request with modified headers
     return NextResponse.next({
@@ -68,13 +97,18 @@ export async function middleware(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Middleware error:', error);
+    console.error('Middleware error for:', request.nextUrl.pathname, error);
     return NextResponse.json(
       {
         error: 'Internal server error',
-        details: 'An error occurred while processing the request',
+        details: 'An unexpected error occurred while processing the request',
       },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      }
     );
   }
 }
