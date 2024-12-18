@@ -74,6 +74,48 @@ function formatContactResponse(dbContact: any) {
   };
 }
 
+// Helper function to build WHERE clause and values for filters
+function buildFilterQuery(userId: string, filters: any) {
+  const conditions = ['created_by = $1'];
+  const values = [userId];
+  let paramCount = 2;
+
+  if (filters.firstName) {
+    conditions.push(`first_name ILIKE $${paramCount}`);
+    values.push(`%${filters.firstName}%`);
+    paramCount++;
+  }
+
+  if (filters.lastName) {
+    conditions.push(`last_name ILIKE $${paramCount}`);
+    values.push(`%${filters.lastName}%`);
+    paramCount++;
+  }
+
+  if (filters.email) {
+    conditions.push(`email_primary ILIKE $${paramCount}`);
+    values.push(`%${filters.email}%`);
+    paramCount++;
+  }
+
+  if (filters.tags && filters.tags.length > 0) {
+    conditions.push(`tags && $${paramCount}`);
+    values.push(filters.tags);
+    paramCount++;
+  }
+
+  if (filters.company) {
+    conditions.push(`company->>'name' ILIKE $${paramCount}`);
+    values.push(`%${filters.company}%`);
+    paramCount++;
+  }
+
+  return {
+    whereClause: conditions.join(' AND '),
+    values
+  };
+}
+
 export async function POST(request: Request) {
   try {
     const headersList = headers();
@@ -182,16 +224,78 @@ export async function GET(request: Request) {
       );
     }
 
-    // Get only contacts created by this user
+    // Parse query parameters
+    const { searchParams } = new URL(request.url);
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+    const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get('pageSize') || '20')));
+    const sortBy = searchParams.get('sortBy') || 'created_at';
+    const sortOrder = searchParams.get('sortOrder') || 'desc';
+    
+    // Validate sort parameters
+    const allowedSortFields = ['first_name', 'last_name', 'email_primary', 'created_at', 'updated_at'];
+    if (!allowedSortFields.includes(sortBy)) {
+      return NextResponse.json(
+        { error: 'Invalid sort field' },
+        { status: 400 }
+      );
+    }
+
+    if (!['asc', 'desc'].includes(sortOrder.toLowerCase())) {
+      return NextResponse.json(
+        { error: 'Invalid sort order' },
+        { status: 400 }
+      );
+    }
+
+    // Build filters
+    const filters = {
+      firstName: searchParams.get('firstName'),
+      lastName: searchParams.get('lastName'),
+      email: searchParams.get('email'),
+      company: searchParams.get('company'),
+      tags: searchParams.get('tags')?.split(',').filter(Boolean)
+    };
+
+    // Build query with filters
+    const { whereClause, values } = buildFilterQuery(userId, filters);
+
+    // Get total count for pagination
+    const countResult = await pool.query(
+      `SELECT COUNT(*) FROM contacts WHERE ${whereClause}`,
+      values
+    );
+    const totalCount = parseInt(countResult.rows[0].count);
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    // Get paginated results
+    const offset = (page - 1) * pageSize;
     const result = await pool.query(
-      `SELECT * FROM contacts WHERE created_by = $1 ORDER BY created_at DESC`,
-      [userId]
+      `SELECT * FROM contacts 
+       WHERE ${whereClause}
+       ORDER BY ${sortBy} ${sortOrder}
+       LIMIT $${values.length + 1} OFFSET $${values.length + 2}`,
+      [...values, pageSize, offset]
     );
 
     // Format all contacts in the response
     const contacts = result.rows.map(contact => formatContactResponse(contact));
 
-    return NextResponse.json(contacts);
+    // Return paginated response
+    return NextResponse.json({
+      data: contacts,
+      pagination: {
+        currentPage: page,
+        pageSize,
+        totalPages,
+        totalCount,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1
+      },
+      sorting: {
+        sortBy,
+        sortOrder
+      }
+    });
   } catch (error) {
     console.error('Error fetching contacts:', error);
     return NextResponse.json(
