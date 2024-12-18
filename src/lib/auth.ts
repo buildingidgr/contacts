@@ -12,12 +12,12 @@ interface TokenValidationResponse {
 
 export async function validateToken(token: string): Promise<TokenValidationResponse> {
   if (!process.env.AUTH_SERVICE_URL) {
-    console.error('AUTH_SERVICE_URL is not configured');
+    console.error('AUTH_SERVICE_URL environment variable is not configured');
     return {
       valid: false,
       error: {
-        message: 'Auth service configuration error',
-        details: 'Authentication service is not properly configured',
+        message: 'Configuration error',
+        details: 'The authentication service URL is not configured. Please set the AUTH_SERVICE_URL environment variable.',
       },
     };
   }
