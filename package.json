@@ -8,14 +8,17 @@
     "start": "next start"
   },
   "dependencies": {
-    "@types/pg": "^8.11.10",
+    "@types/pg": "8.10.9",
     "next": "14.0.4",
-    "pg": "^8.11.3"
+    "pg": "8.11.3"
   },
   "devDependencies": {
-    "@types/node": "^20",
-    "typescript": "^5",
-    "eslint": "^8",
+    "@types/node": "20.10.5",
+    "typescript": "5.3.3",
+    "eslint": "8.56.0",
     "eslint-config-next": "14.0.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
