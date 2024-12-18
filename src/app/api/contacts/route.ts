@@ -4,10 +4,7 @@ import pool from '@/lib/db';
 import { z } from 'zod';
 
 // Validation schemas
-const EmailSchema = z.object({
-  primary: z.string().email().max(100),
-  secondary: z.string().email().max(100).optional()
-});
+const EmailSchema = z.string().email().max(100);
 
 const PhoneSchema = z.object({
   type: z.enum(['work', 'mobile', 'home']),
@@ -68,21 +65,19 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check if this user already has this exact contact
+    // Check if this user already has a contact with this email
     const existingContact = await pool.query(
       `SELECT id FROM contacts 
        WHERE created_by = $1 
-       AND first_name = $2 
-       AND last_name = $3 
-       AND email_primary = $4`,
-      [userId, validatedData.firstName, validatedData.lastName, validatedData.email.primary]
+       AND email_primary = $2`,
+      [userId, validatedData.email]
     );
 
     if (existingContact.rows.length > 0) {
       return NextResponse.json(
         { 
           error: 'Duplicate contact', 
-          details: 'You already have a contact with the same name and email' 
+          details: 'You already have a contact with this email address' 
         },
         { status: 409 }
       );
@@ -96,19 +91,17 @@ export async function POST(request: Request) {
     const result = await pool.query(
       `INSERT INTO contacts (
         id, first_name, last_name, 
-        email_primary, email_secondary,
-        phones, address, company,
+        email_primary, phones, address, company,
         project_ids, opportunity_ids, tags,
         created_at, updated_at,
         created_by
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
       RETURNING *`,
       [
         id,
         validatedData.firstName,
         validatedData.lastName,
-        validatedData.email.primary,
-        validatedData.email.secondary,
+        validatedData.email,
         JSON.stringify(validatedData.phones),
         validatedData.address ? JSON.stringify(validatedData.address) : null,
         validatedData.company ? JSON.stringify(validatedData.company) : null,

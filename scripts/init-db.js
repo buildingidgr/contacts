@@ -30,7 +30,7 @@ async function checkTableStructure(pool) {
     `);
     
     const requiredColumns = [
-      'id', 'first_name', 'last_name', 'email_primary', 'email_secondary',
+      'id', 'first_name', 'last_name', 'email_primary',
       'phones', 'address', 'company', 'project_ids', 'opportunity_ids',
       'tags', 'created_at', 'updated_at'
     ];
