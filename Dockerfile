@@ -39,6 +39,11 @@ COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/schema.sql ./
 COPY --from=builder /app/scripts ./scripts
 COPY --from=builder /app/package.json ./
+COPY --from=builder /app/scripts/start.sh ./
+
+# Set permissions before switching user
+RUN chmod +x start.sh && \
+    chown -R nextjs:nodejs .
 
 # Install production dependencies
 RUN npm install pg
@@ -49,9 +54,5 @@ EXPOSE 3000
 
 ENV PORT 3000
 ENV HOSTNAME "0.0.0.0"
-
-# Create a startup script
-COPY --from=builder /app/scripts/start.sh ./
-RUN chmod +x start.sh
 
 CMD ["./start.sh"]
