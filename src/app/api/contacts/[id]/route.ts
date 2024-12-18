@@ -48,4 +48,61 @@ export async function GET(
       { status: 500 }
     );
   }
+}
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const headersList = headers();
+    const userId = headersList.get('x-user-id');
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const { id } = params;
+    
+    // First check if the contact exists and belongs to this user
+    const contact = await pool.query(
+      'SELECT created_by FROM contacts WHERE id = $1',
+      [id]
+    );
+
+    if (contact.rows.length === 0) {
+      return NextResponse.json(
+        { error: 'Contact not found' },
+        { status: 404 }
+      );
+    }
+
+    // Verify ownership
+    if (contact.rows[0].created_by !== userId) {
+      return NextResponse.json(
+        { error: 'Forbidden', details: 'You do not have permission to delete this contact' },
+        { status: 403 }
+      );
+    }
+
+    // Delete the contact
+    await pool.query(
+      'DELETE FROM contacts WHERE id = $1',
+      [id]
+    );
+
+    return NextResponse.json(
+      { message: 'Contact deleted successfully' },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error('Error deleting contact:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
 } 
