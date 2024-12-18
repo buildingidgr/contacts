@@ -8,9 +8,7 @@ const nextConfig = {
   },
   experimental: {
     // This is experimental but can help resolve issues with the build
-    serverActions: false,
-    // Disable server components for API-only usage
-    serverComponents: false
+    serverActions: false
   }
 }
 
