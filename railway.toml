@@ -3,7 +3,7 @@ builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
 
 [deploy]
-startCommand = "npm run init-db && node server.js"
+startCommand = "./start.sh"
 restartPolicyType = "ON_FAILURE"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 100

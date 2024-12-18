@@ -38,6 +38,10 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/schema.sql ./
 COPY --from=builder /app/scripts ./scripts
+COPY --from=builder /app/package.json ./
+
+# Install production dependencies
+RUN npm install pg
 
 USER nextjs
 
@@ -46,5 +50,8 @@ EXPOSE 3000
 ENV PORT 3000
 ENV HOSTNAME "0.0.0.0"
 
-# Initialize database and start the application
-CMD npm run init-db && node server.js 
+# Create a startup script
+COPY --from=builder /app/scripts/start.sh ./
+RUN chmod +x start.sh
+
+CMD ["./start.sh"]
