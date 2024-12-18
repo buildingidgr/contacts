@@ -5,7 +5,10 @@ const nextConfig = {
     ignoreBuildErrors: true
   },
   // Disable all UI-related features
-  images: false,
+  images: {
+    disableStaticImages: true,
+    unoptimized: true
+  },
   reactStrictMode: false,
   optimizeFonts: false,
   compress: true,
