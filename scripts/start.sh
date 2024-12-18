@@ -19,8 +19,25 @@ const pool = new Pool({
 
 async function verify() {
     try {
-        const result = await pool.query('SELECT column_name FROM information_schema.columns WHERE table_name = $1', ['contacts']);
-        console.log('Table columns:', result.rows.map(r => r.column_name).join(', '));
+        const result = await pool.query(\`
+            SELECT column_name, data_type, character_maximum_length
+            FROM information_schema.columns 
+            WHERE table_name = 'contacts'
+            ORDER BY ordinal_position;\`
+        );
+        
+        if (result.rows.length === 0) {
+            console.error('No columns found in contacts table');
+            process.exit(1);
+        }
+        
+        console.log('Table structure:');
+        result.rows.forEach(col => {
+            console.log(\`- \${col.column_name}: \${col.data_type}\${
+                col.character_maximum_length ? \`(\${col.character_maximum_length})\` : ''
+            }\`);
+        });
+        
         await pool.end();
     } catch (error) {
         console.error('Verification failed:', error);
@@ -28,7 +45,10 @@ async function verify() {
     }
 }
 
-verify();
+verify().catch(error => {
+    console.error('Verification error:', error);
+    process.exit(1);
+});
 "; then
     echo "Schema verification failed"
     exit 1

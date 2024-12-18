@@ -20,15 +20,34 @@ async function waitForDatabase(pool, maxAttempts = 5) {
   return false;
 }
 
-async function checkTableExists(pool) {
-  const result = await pool.query(`
-    SELECT EXISTS (
-      SELECT FROM information_schema.tables 
-      WHERE table_schema = 'public'
-      AND table_name = 'contacts'
-    );
-  `);
-  return result.rows[0].exists;
+async function checkTableStructure(pool) {
+  try {
+    const result = await pool.query(`
+      SELECT column_name, data_type
+      FROM information_schema.columns 
+      WHERE table_name = 'contacts'
+      ORDER BY ordinal_position;
+    `);
+    
+    const requiredColumns = [
+      'id', 'first_name', 'last_name', 'email_primary', 'email_secondary',
+      'phones', 'address', 'company', 'project_ids', 'opportunity_ids',
+      'tags', 'created_at', 'updated_at'
+    ];
+    
+    const existingColumns = result.rows.map(row => row.column_name);
+    const missingColumns = requiredColumns.filter(col => !existingColumns.includes(col));
+    
+    if (missingColumns.length > 0) {
+      console.log('Missing columns:', missingColumns.join(', '));
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error checking table structure:', error);
+    return false;
+  }
 }
 
 async function initializeDatabase() {
@@ -43,27 +62,29 @@ async function initializeDatabase() {
     // Wait for database to be ready
     await waitForDatabase(pool);
 
-    // Check if table exists
-    const tableExists = await checkTableExists(pool);
-    if (tableExists) {
-      console.log('Contacts table already exists, skipping initialization');
+    // Check table structure
+    const hasValidStructure = await checkTableStructure(pool);
+    if (hasValidStructure) {
+      console.log('Contacts table exists with correct structure');
       await pool.end();
       return;
     }
+
+    console.log('Table needs to be recreated');
 
     // Read and log the schema
     const schemaPath = path.join(__dirname, '../schema.sql');
     console.log('Reading schema from:', schemaPath);
     const schema = fs.readFileSync(schemaPath, 'utf8');
-    console.log('Executing schema:', schema);
     
     // Execute the schema
     await pool.query(schema);
+    console.log('Schema executed successfully');
     
-    // Verify table creation
-    const verifyTable = await checkTableExists(pool);
-    if (!verifyTable) {
-      throw new Error('Table was not created successfully');
+    // Verify the new structure
+    const isValid = await checkTableStructure(pool);
+    if (!isValid) {
+      throw new Error('Table structure is still invalid after recreation');
     }
     
     console.log('Database schema created successfully');
