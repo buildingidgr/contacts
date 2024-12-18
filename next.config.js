@@ -1,14 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
-  typescript: {
-    // Dangerously allow production builds to successfully complete even if
-    // your project has type errors.
-    ignoreBuildErrors: true,
+  // Disable page optimization since we're only using API routes
+  optimizeFonts: false,
+  images: {
+    unoptimized: true,
   },
-  experimental: {
-    // This is experimental but can help resolve issues with the build
-    serverActions: false
+  // Disable unnecessary features
+  reactStrictMode: false,
+  swcMinify: true,
+  typescript: {
+    ignoreBuildErrors: true,
   }
 }
 

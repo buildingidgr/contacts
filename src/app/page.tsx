@@ -1,16 +1,21 @@
-'use client';
-
-export default function Home() {
+function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-8">
-      <h1 className="text-2xl font-bold mb-4">Contacts API Service</h1>
-      <div className="space-y-2">
+    <div style={{ 
+      padding: '20px',
+      maxWidth: '800px',
+      margin: '0 auto',
+      fontFamily: 'system-ui, sans-serif'
+    }}>
+      <h1 style={{ marginBottom: '20px' }}>Contacts API Service</h1>
+      <div>
         <p>Available endpoints:</p>
-        <ul className="list-disc pl-5">
-          <li>/api/contacts/[id]</li>
-          <li>/api/health</li>
+        <ul style={{ marginTop: '10px', paddingLeft: '20px' }}>
+          <li>/api/contacts/[id] - Get contact by ID</li>
+          <li>/api/health - Health check endpoint</li>
         </ul>
       </div>
-    </main>
+    </div>
   );
 }
+
+export default Home;
