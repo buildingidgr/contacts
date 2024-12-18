@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { headers } from 'next/headers';
 import pool from '@/lib/db';
 import { z } from 'zod';
 
@@ -43,6 +44,16 @@ const ContactSchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    const headersList = headers();
+    const userId = headersList.get('x-user-id');
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     
     // Validate request body
@@ -57,7 +68,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Generate a unique ID (you might want to use UUID or another ID generation method)
+    // Generate a unique ID
     const id = 'c' + Date.now().toString();
 
     // Prepare data for insertion
@@ -68,8 +79,9 @@ export async function POST(request: Request) {
         email_primary, email_secondary,
         phones, address, company,
         project_ids, opportunity_ids, tags,
-        created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        created_at, updated_at,
+        created_by
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
       RETURNING *`,
       [
         id,
@@ -84,11 +96,21 @@ export async function POST(request: Request) {
         validatedData.opportunityIds || null,
         validatedData.tags || null,
         now,
-        now
+        now,
+        userId
       ]
     );
 
-    return NextResponse.json(result.rows[0], { status: 201 });
+    // Add metadata to response
+    const contact = {
+      ...result.rows[0],
+      _metadata: {
+        createdBy: userId,
+        createdAt: now
+      }
+    };
+
+    return NextResponse.json(contact, { status: 201 });
   } catch (error) {
     console.error('Error creating contact:', error);
     

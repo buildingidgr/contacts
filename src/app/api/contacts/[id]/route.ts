@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { headers } from 'next/headers';
 import pool from '@/lib/db';
 
 export async function GET(
@@ -6,6 +7,16 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const headersList = headers();
+    const userId = headersList.get('x-user-id');
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const { id } = params;
     
     const result = await pool.query(
@@ -20,7 +31,16 @@ export async function GET(
       );
     }
 
-    return NextResponse.json(result.rows[0]);
+    // Add user information to the response
+    const contact = {
+      ...result.rows[0],
+      _metadata: {
+        requestedBy: userId,
+        requestTime: new Date().toISOString()
+      }
+    };
+
+    return NextResponse.json(contact);
   } catch (error) {
     console.error('Error fetching contact:', error);
     return NextResponse.json(
