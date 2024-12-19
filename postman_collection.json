@@ -1,0 +1,215 @@
+{
+	"info": {
+		"name": "Contacts API",
+		"description": "Collection for testing the Contacts API endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "List Contacts",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/contacts?page=1&pageSize=20&sortBy=created_at&sortOrder=desc",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "contacts"],
+					"query": [
+						{
+							"key": "page",
+							"value": "1"
+						},
+						{
+							"key": "pageSize",
+							"value": "20"
+						},
+						{
+							"key": "sortBy",
+							"value": "created_at"
+						},
+						{
+							"key": "sortOrder",
+							"value": "desc"
+						},
+						{
+							"key": "firstName",
+							"value": "John",
+							"disabled": true
+						},
+						{
+							"key": "lastName",
+							"value": "Doe",
+							"disabled": true
+						},
+						{
+							"key": "email",
+							"value": "john@example.com",
+							"disabled": true
+						},
+						{
+							"key": "company",
+							"value": "Acme",
+							"disabled": true
+						},
+						{
+							"key": "tags",
+							"value": "vip,client",
+							"disabled": true
+						}
+					]
+				},
+				"description": "Get a paginated list of contacts with optional filtering"
+			}
+		},
+		{
+			"name": "Get Contact by ID",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/contacts/{{contactId}}",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "contacts", "{{contactId}}"]
+				},
+				"description": "Get a specific contact by ID"
+			}
+		},
+		{
+			"name": "Create Contact",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"john@example.com\",\n  \"phones\": [\n    {\n      \"type\": \"mobile\",\n      \"number\": \"+306973359331\",\n      \"primary\": true\n    }\n  ],\n  \"address\": {\n    \"street\": \"123 Main St\",\n    \"unit\": \"4B\",\n    \"city\": \"Springfield\",\n    \"state\": \"IL\",\n    \"country\": \"US\",\n    \"postalCode\": \"62701\"\n  },\n  \"company\": {\n    \"name\": \"Acme Corp\",\n    \"title\": \"Software Engineer\",\n    \"type\": \"Technology\"\n  },\n  \"projectIds\": [\"p123\", \"p456\"],\n  \"opportunityIds\": [\"o789\"],\n  \"tags\": [\"client\", \"vip\"]\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/contacts",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "contacts"]
+				},
+				"description": "Create a new contact"
+			}
+		},
+		{
+			"name": "Update Contact",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Smith\",\n  \"phones\": [\n    {\n      \"type\": \"work\",\n      \"number\": \"+306973359331\",\n      \"primary\": true\n    }\n  ],\n  \"tags\": [\"vip\", \"priority\"]\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/contacts/{{contactId}}",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "contacts", "{{contactId}}"]
+				},
+				"description": "Update specific fields of a contact"
+			}
+		},
+		{
+			"name": "Delete Contact",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/contacts/{{contactId}}",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "contacts", "{{contactId}}"]
+				},
+				"description": "Delete a specific contact"
+			}
+		},
+		{
+			"name": "Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/health",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "health"]
+				},
+				"description": "Check if the API is healthy"
+			}
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3000",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "your_auth_token_here",
+			"type": "string"
+		},
+		{
+			"key": "contactId",
+			"value": "contact_id_here",
+			"type": "string"
+		}
+	]
+} 
