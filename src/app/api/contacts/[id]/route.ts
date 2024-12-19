@@ -18,7 +18,7 @@ const PhoneSchema = z.object({
 const AddressSchema = z.object({
   street: z.string().min(5).max(100),
   unit: z.string().max(20).optional(),
-  city: z.string().min(2).max(50).regex(/^[A-Za-z\s]+$/),
+  city: z.string().min(2).max(50),
   state: z.string().min(2).max(50),
   country: z.string().length(2),
   postalCode: z.string().regex(/^\d{5}(-\d{4})?$/).optional()
@@ -32,8 +32,8 @@ const CompanySchema = z.object({
 
 // Validation schemas for PATCH - all fields are optional
 const PatchContactSchema = z.object({
-  firstName: z.string().min(2).max(50).regex(/^[A-Za-z]+$/).optional(),
-  lastName: z.string().min(2).max(50).regex(/^[A-Za-z]+$/).optional(),
+  firstName: z.string().min(2).max(50).regex(/^[\p{L}]+$/u, "Only letters allowed").optional(),
+  lastName: z.string().min(2).max(50).regex(/^[\p{L}]+$/u, "Only letters allowed").optional(),
   email: EmailSchema.optional(),
   phones: z.array(PhoneSchema).min(1).optional(),
   address: AddressSchema.optional(),

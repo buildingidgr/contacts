@@ -18,7 +18,7 @@ const PhoneSchema = z.object({
 const AddressSchema = z.object({
   street: z.string().min(5).max(100),
   unit: z.string().max(20).optional(),
-  city: z.string().min(2).max(50).regex(/^[A-Za-z\s]+$/),
+  city: z.string().min(2).max(50),
   state: z.string().min(2).max(50),
   country: z.string().length(2),
   postalCode: z.string().regex(/^\d{5}(-\d{4})?$/).optional()
@@ -31,8 +31,8 @@ const CompanySchema = z.object({
 }).optional();
 
 const ContactSchema = z.object({
-  firstName: z.string().min(2).max(50).regex(/^[A-Za-z]+$/),
-  lastName: z.string().min(2).max(50).regex(/^[A-Za-z]+$/),
+  firstName: z.string().min(2).max(50).regex(/^[\p{L}]+$/u, "Only letters allowed"),
+  lastName: z.string().min(2).max(50).regex(/^[\p{L}]+$/u, "Only letters allowed"),
   email: EmailSchema,
   phones: z.array(PhoneSchema).min(1),
   address: AddressSchema,
