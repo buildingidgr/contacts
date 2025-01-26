@@ -5,6 +5,16 @@ CREATE TABLE IF NOT EXISTS contacts (
     last_name VARCHAR(50) NOT NULL CHECK (last_name ~ '^[\p{L}]{2,50}$'),
     email_primary VARCHAR(100) NOT NULL CHECK (email_primary ~ '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
     phones JSONB NOT NULL,
+    -- Address is a JSONB object with the following structure:
+    -- {
+    --   "streetNumber": string,
+    --   "street": string,
+    --   "city": string,
+    --   "area": string,
+    --   "country": string,
+    --   "countryCode": string (2 chars),
+    --   "postalCode": string
+    -- }
     address JSONB,
     company JSONB,
     project_ids TEXT[],

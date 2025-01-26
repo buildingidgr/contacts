@@ -104,7 +104,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"john@example.com\",\n  \"phones\": [\n    {\n      \"type\": \"mobile\",\n      \"number\": \"+306973359331\",\n      \"primary\": true\n    }\n  ],\n  \"address\": {\n    \"street\": \"123 Main St\",\n    \"unit\": \"4B\",\n    \"city\": \"Springfield\",\n    \"state\": \"IL\",\n    \"country\": \"US\",\n    \"postalCode\": \"62701\"\n  },\n  \"company\": {\n    \"name\": \"Acme Corp\",\n    \"title\": \"Software Engineer\",\n    \"type\": \"Technology\"\n  },\n  \"projectIds\": [\"p123\", \"p456\"],\n  \"opportunityIds\": [\"o789\"],\n  \"tags\": [\"client\", \"vip\"]\n}"
+					"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"john@example.com\",\n  \"phones\": [\n    {\n      \"type\": \"mobile\",\n      \"number\": \"+306973359331\",\n      \"primary\": true\n    }\n  ],\n  \"address\": {\n    \"streetNumber\": \"11\",\n    \"street\": \"Σπάρτακου\",\n    \"city\": \"Συκιές\",\n    \"area\": \"Θεσσαλονίκη\",\n    \"country\": \"Ελλάδα\",\n    \"countryCode\": \"GR\",\n    \"postalCode\": \"566 26\"\n  },\n  \"company\": {\n    \"name\": \"Acme Corp\",\n    \"title\": \"Software Engineer\",\n    \"type\": \"Technology\"\n  },\n  \"projectIds\": [\"p123\", \"p456\"],\n  \"opportunityIds\": [\"o789\"],\n  \"tags\": [\"client\", \"vip\"]\n}"
 				},
 				"url": {
 					"raw": "{{baseUrl}}/api/contacts",

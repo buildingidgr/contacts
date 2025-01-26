@@ -1,48 +1,18 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
-
-## Getting Started
-
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-
 # Contacts API Documentation
 
 ## Authentication
 
 All endpoints require authentication using a Bearer token in the Authorization header:
 ```
-Authorization: Bearer <your_token>
+Authorization: Bearer <jwt_token>
 ```
+
+Example:
+```
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyXzJwV0dCZTJvRGtWZGZhYjFUQWZ2UjA1YVgwNiIsInR5cGUiOiJhY2Nlc3MiLCJpYXQiOjE3MzUwNjI4MzksImV4cCI6MTczNTA2NjQzOX0.J_KrudX2d4yoC1Pnw6uO1x2kHghBpf_lV2W1WUgBKZE
+```
+
+The JWT token contains the user's identity and access permissions. Tokens are valid for a limited time and must be renewed when expired.
 
 ## Endpoints
 
@@ -90,11 +60,12 @@ Retrieves a paginated list of contacts with optional filtering and sorting.
         }
       ],
       "address": {
+        "streetNumber": "string",
         "street": "string",
-        "unit": "string",
         "city": "string",
-        "state": "string",
+        "area": "string",
         "country": "string",
+        "countryCode": "string",
         "postalCode": "string"
       },
       "company": {
@@ -147,11 +118,12 @@ Retrieves a specific contact by ID.
     }
   ],
   "address": {
+    "streetNumber": "string",
     "street": "string",
-    "unit": "string",
     "city": "string",
-    "state": "string",
+    "area": "string",
     "country": "string",
+    "countryCode": "string",
     "postalCode": "string"
   },
   "company": {
@@ -178,23 +150,24 @@ Creates a new contact.
 #### Request Body
 ```json
 {
-  "firstName": "string",     // Required: 2-50 chars, letters only
-  "lastName": "string",      // Required: 2-50 chars, letters only
+  "firstName": "string",     // Required: 2-50 chars, letters only (including Greek)
+  "lastName": "string",      // Required: 2-50 chars, letters only (including Greek)
   "email": "string",        // Required: valid email, max 100 chars
   "phones": [               // Required: at least one phone
     {
       "type": "work|mobile|home",
-      "number": "+X-XXX-XXX-XXXX",
+      "number": "string",   // E.164 format
       "primary": true      // Exactly one phone must be primary
     }
   ],
   "address": {             // Optional
-    "street": "string",    // Required if address present: 5-100 chars
-    "unit": "string",      // Optional: max 20 chars
-    "city": "string",      // Required if address present: 2-50 chars, letters and spaces
-    "state": "string",     // Required if address present: 2-50 chars
-    "country": "string",   // Required if address present: exactly 2 chars
-    "postalCode": "string" // Optional: XXXXX or XXXXX-XXXX format
+    "streetNumber": "string",
+    "street": "string",
+    "city": "string",
+    "area": "string",
+    "country": "string",
+    "countryCode": "string", // Exactly 2 characters
+    "postalCode": "string"
   },
   "company": {             // Optional
     "name": "string",      // Required if company present: 2-100 chars
@@ -217,25 +190,26 @@ Updates specific fields of a contact. All fields are optional.
 #### Request Body
 ```json
 {
-  "firstName": "string",     // Optional: 2-50 chars, letters only
-  "lastName": "string",      // Optional: 2-50 chars, letters only
+  "firstName": "string",     // Optional: 2-50 chars, letters only (including Greek)
+  "lastName": "string",      // Optional: 2-50 chars, letters only (including Greek)
   "email": "string",        // Optional: valid email, max 100 chars
   "phones": [               // Optional: if provided, at least one phone
     {
       "type": "work|mobile|home",
-      "number": "+X-XXX-XXX-XXXX",
+      "number": "string",   // E.164 format
       "primary": true      // If phones provided, exactly one must be primary
     }
   ],
-  "address": {             // Optional
-    "street": "string",    // Required if address present: 5-100 chars
-    "unit": "string",      // Optional: max 20 chars
-    "city": "string",      // Required if address present: 2-50 chars, letters and spaces
-    "state": "string",     // Required if address present: 2-50 chars
-    "country": "string",   // Required if address present: exactly 2 chars
-    "postalCode": "string" // Optional: XXXXX or XXXXX-XXXX format
+  "address": {             // Optional (can be null to remove)
+    "streetNumber": "string",
+    "street": "string",
+    "city": "string",
+    "area": "string",
+    "country": "string",
+    "countryCode": "string", // Exactly 2 characters
+    "postalCode": "string"
   },
-  "company": {             // Optional
+  "company": {             // Optional (can be null to remove)
     "name": "string",      // Required if company present: 2-100 chars
     "title": "string",     // Optional: 2-50 chars
     "type": "string"       // Optional: 2-50 chars
@@ -257,6 +231,29 @@ Deletes a specific contact.
 ```json
 {
   "message": "Contact deleted successfully"
+}
+```
+
+### API Information
+```http
+GET /api
+```
+
+Returns information about the API and available endpoints.
+
+#### Response
+```json
+{
+  "name": "Contacts API",
+  "version": "1.0.0",
+  "endpoints": {
+    "GET /api/contacts": "Get all contacts with pagination and filters",
+    "GET /api/contacts/:id": "Get contact by ID",
+    "POST /api/contacts": "Create a new contact",
+    "PATCH /api/contacts/:id": "Update contact fields by ID",
+    "DELETE /api/contacts/:id": "Delete contact by ID",
+    "GET /api/health": "Health check endpoint"
+  }
 }
 ```
 
@@ -316,24 +313,77 @@ All endpoints may return the following error responses:
 }
 ```
 
-## Phone Number Format
-Phone numbers should follow the E.164 international format:
-- Optional '+' prefix
-- Country code
-- National number
-- No spaces or special characters
-- Minimum 8 digits, maximum 20 digits
-
-Examples:
-- +306973359331
-- +14155552671
-- 306973359331
-
 ## Validation Rules
-1. Names: Letters only (no spaces or special characters), 2-50 characters
-2. Email: Valid email format, max 100 characters
-3. City: Letters and spaces only, 2-50 characters
-4. Country: Exactly 2 characters
-5. Postal Code: US format (XXXXX or XXXXX-XXXX)
-6. Tags: Maximum 10 tags, each 2-20 characters
-7. Phones: At least one phone number, exactly one marked as primary
+
+### General Rules
+1. Names (firstName, lastName):
+   - 2-50 characters
+   - Letters only (including Greek characters)
+   - No spaces or special characters
+
+2. Email:
+   - Valid email format
+   - Maximum 100 characters
+   - Must be unique per user
+
+3. Phone Numbers:
+   - E.164 international format
+   - Optional '+' prefix
+   - Country code + national number
+   - No spaces or special characters
+   - 8-20 digits total
+   - Examples:
+     - +306973359331
+     - +14155552671
+     - 306973359331
+
+4. Address:
+   - Optional object
+   - When provided:
+     - streetNumber: Street number
+     - street: Street name
+     - city: City name
+     - area: Area/Region/State
+     - country: Full country name
+     - countryCode: Exactly 2 characters (ISO country code)
+     - postalCode: Postal/ZIP code in local format
+
+5. Company:
+   - Optional object
+   - When provided:
+     - name: 2-100 characters
+     - title: Optional, 2-50 characters
+     - type: Optional, 2-50 characters
+
+6. Tags:
+   - Optional array
+   - Maximum 10 tags
+   - Each tag: 2-20 characters
+
+7. Arrays:
+   - projectIds: Optional array of strings
+   - opportunityIds: Optional array of strings
+   - phones: At least one phone number required
+   - Exactly one phone must be marked as primary
+
+### Character Support
+- All text fields support Greek characters (Unicode property \p{L})
+- Special characters are allowed in appropriate fields (e.g., email addresses)
+- Postal codes and phone numbers follow strict formats
+
+## Rate Limiting
+The API currently does not implement rate limiting, but it's recommended to:
+- Limit requests to 100 per minute per user
+- Implement exponential backoff for retry attempts
+
+## Pagination
+- Default page size: 20 items
+- Maximum page size: 100 items
+- Page numbers start at 1
+- Sort order defaults to descending by creation date
+
+## Data Ownership
+- Each contact is associated with a user (createdBy)
+- Users can only access their own contacts
+- Duplicate email addresses are not allowed within a user's contacts
+- Contacts cannot be transferred between users

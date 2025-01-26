@@ -16,12 +16,13 @@ const PhoneSchema = z.object({
 });
 
 const AddressSchema = z.object({
-  street: z.string().min(5).max(100),
-  unit: z.string().max(20).optional(),
-  city: z.string().min(2).max(50),
-  state: z.string().min(2).max(50),
-  country: z.string().length(2),
-  postalCode: z.string().regex(/^\d{5}(-\d{4})?$/).optional()
+  streetNumber: z.string(),
+  street: z.string(),
+  city: z.string(),
+  area: z.string(),
+  country: z.string(),
+  countryCode: z.string().length(2),
+  postalCode: z.string()
 }).optional();
 
 const CompanySchema = z.object({
