@@ -8,6 +8,7 @@ const EmailSchema = z.string().email().max(100);
 
 export async function GET(request: Request) {
   console.log('🔍 [find-by-email] Starting email search request');
+  console.log('🌐 [find-by-email] Full request URL:', request.url);
   
   try {
     const headersList = headers();
@@ -23,11 +24,17 @@ export async function GET(request: Request) {
     }
 
     // Get email from query params
-    const { searchParams } = new URL(request.url);
-    const email = searchParams.get('email');
-    console.log('📧 [find-by-email] Searching for email:', email);
+    const url = new URL(request.url);
+    console.log('🔍 [find-by-email] Search parameters:', Object.fromEntries(url.searchParams));
+    
+    const email = url.searchParams.get('email');
+    console.log('📧 [find-by-email] Raw email parameter:', email);
+    
+    // Try decoding the email if it's encoded
+    const decodedEmail = email ? decodeURIComponent(email) : null;
+    console.log('📧 [find-by-email] Decoded email:', decodedEmail);
 
-    if (!email) {
+    if (!decodedEmail) {
       console.log('❌ [find-by-email] No email parameter provided');
       return NextResponse.json(
         { error: 'Email parameter is required' },
@@ -37,7 +44,7 @@ export async function GET(request: Request) {
 
     // Validate email format
     try {
-      EmailSchema.parse(email);
+      EmailSchema.parse(decodedEmail);
       console.log('✅ [find-by-email] Email format validation passed');
     } catch (error) {
       console.log('❌ [find-by-email] Email validation failed:', error);
@@ -53,7 +60,7 @@ export async function GET(request: Request) {
       `SELECT id FROM contacts 
        WHERE created_by = $1 
        AND email_primary = $2`,
-      [userId, email]
+      [userId, decodedEmail]
     );
     console.log('📊 [find-by-email] Query results:', {
       rowCount: result.rows.length,
