@@ -7,11 +7,15 @@ import { z } from 'zod';
 const EmailSchema = z.string().email().max(100);
 
 export async function GET(request: Request) {
+  console.log('🔍 [find-by-email] Starting email search request');
+  
   try {
     const headersList = headers();
     const userId = headersList.get('x-user-id');
+    console.log('👤 [find-by-email] User ID from headers:', userId);
     
     if (!userId) {
+      console.log('❌ [find-by-email] No user ID provided in headers');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -21,8 +25,10 @@ export async function GET(request: Request) {
     // Get email from query params
     const { searchParams } = new URL(request.url);
     const email = searchParams.get('email');
+    console.log('📧 [find-by-email] Searching for email:', email);
 
     if (!email) {
+      console.log('❌ [find-by-email] No email parameter provided');
       return NextResponse.json(
         { error: 'Email parameter is required' },
         { status: 400 }
@@ -32,7 +38,9 @@ export async function GET(request: Request) {
     // Validate email format
     try {
       EmailSchema.parse(email);
+      console.log('✅ [find-by-email] Email format validation passed');
     } catch (error) {
+      console.log('❌ [find-by-email] Email validation failed:', error);
       return NextResponse.json(
         { error: 'Invalid email format' },
         { status: 400 }
@@ -40,19 +48,27 @@ export async function GET(request: Request) {
     }
 
     // Query for exact email match
+    console.log('🔍 [find-by-email] Executing database query');
     const result = await pool.query(
       `SELECT id FROM contacts 
        WHERE created_by = $1 
        AND email_primary = $2`,
       [userId, email]
     );
-
-    return NextResponse.json({
-      exists: result.rows.length > 0,
+    console.log('📊 [find-by-email] Query results:', {
+      rowCount: result.rows.length,
       contactId: result.rows.length > 0 ? result.rows[0].id : null
     });
+
+    const response = {
+      exists: result.rows.length > 0,
+      contactId: result.rows.length > 0 ? result.rows[0].id : null
+    };
+    console.log('✅ [find-by-email] Returning response:', response);
+    
+    return NextResponse.json(response);
   } catch (error) {
-    console.error('Error finding contact by email:', error);
+    console.error('❌ [find-by-email] Error in request:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
